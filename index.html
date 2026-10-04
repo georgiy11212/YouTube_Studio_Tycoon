@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="uk" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Сhannel Tycoon</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        youtube: '#ff0000',
+                        ytbg: '#0f0f0f',
+                        ytcard: '#212121',
+                        ytborder: '#3f3f3f'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body id="appBody" class="bg-ytbg text-white font-['Roboto'] min-h-screen flex flex-col select-none transition-colors duration-500">
+
+    <!-- Modal for Channel Name -->
+    <div id="nameModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-ytcard border border-ytborder p-6 rounded-2xl max-w-md w-full shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-youtube/20 text-youtube rounded-full text-2xl mb-3">
+                    <i class="fa-brands fa-youtube"></i>
+                </div>
+                <h2 class="text-2xl font-bold">Створіть свій YouTube канал</h2>
+                <p class="text-gray-400 text-sm mt-1">Назву можна встановити лише 1 раз назавжди!</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Назва каналу</label>
+                    <input type="text" id="channelNameInput" placeholder="Наприклад: GamerProUA" class="w-full bg-ytbg border border-ytborder rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-youtube transition">
+                </div>
+                <button id="saveChannelNameBtn" class="w-full bg-youtube hover:bg-red-700 font-bold py-3 rounded-lg transition shadow-lg shadow-youtube/30 cursor-pointer">
+                    Створити канал
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Live Notification Container -->
+    <div id="notificationContainer" class="fixed top-20 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="h-16 border-b border-ytborder bg-ytcard px-4 flex items-center justify-between sticky top-0 z-40">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-youtube text-2xl font-bold tracking-tighter">
+                <i class="fa-brands fa-youtube"></i>
+                <span class="text-white text-lg">YouTube</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <!-- Notifications Toggle Button -->
+            <div class="relative">
+                <button id="toggleNotificationsBtn" class="bg-ytbg hover:bg-ytborder border border-ytborder w-10 h-10 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition cursor-pointer relative" title="Історія сповіщень">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="notifBadge" class="absolute -top-1 -right-1 bg-youtube text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+                </button>
+
+                <!-- Notifications Dropdown Panel -->
+                <div id="notificationsDropdown" class="absolute right-0 mt-2 w-80 sm:w-96 bg-ytcard border border-ytborder rounded-2xl shadow-2xl hidden z-50 overflow-hidden flex flex-col max-h-[400px]">
+                    <div class="p-4 border-b border-ytborder flex items-center justify-between bg-ytbg/50">
+                        <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-bell text-youtube"></i> Сповіщення</h3>
+                        <button id="clearNotificationsBtn" class="text-xs text-gray-400 hover:text-youtube transition cursor-pointer">Очистити</button>
+                    </div>
+                    <div id="notificationsList" class="overflow-y-auto p-2 space-y-2 flex-1">
+                        <div class="text-center text-gray-500 text-xs py-8">Поки немає жодних сповіщень</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Currency Bar -->
+            <div class="flex items-center gap-4 bg-ytbg px-4 py-2 rounded-full border border-ytborder">
+                <div class="flex items-center gap-1.5 text-emerald-400 font-bold text-sm" title="Долари">
+                    <i class="fa-solid fa-dollar-sign"></i>
+                    <span id="dollarsDisplay">0</span>
+                </div>
+                <div class="h-4 w-[1px] bg-ytborder"></div>
+                <div class="flex items-center gap-1.5 text-youtube font-bold text-sm" title="Ютуберки">
+                    <i class="fa-solid fa-play"></i>
+                    <span id="youtubertsDisplay">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left & Center: Channel, Wheel & Play Buttons (2 cols) -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Channel Info Card -->
+            <div id="channelCard" class="bg-ytcard border border-ytborder rounded-2xl p-6 relative overflow-hidden transition-all duration-300">
+                <div class="absolute top-0 right-0 p-6 opacity-10 text-8xl pointer-events-none">
+                    <i class="fa-brands fa-youtube"></i>
+                </div>
+                <div class="flex items-center gap-4 mb-6">
+                    <div id="channelAvatar" class="w-16 h-16 rounded-full bg-youtube flex items-center justify-center text-3xl font-bold shadow-lg">
+                        Y
+                    </div>
+                    <div>
+                        <h1 id="displayChannelName" class="text-2xl font-bold">Мій Канал</h1>
+                        <p class="text-gray-400 text-sm">Студія блогера</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-ytbg/60 p-4 rounded-xl border border-ytborder/55">
+                        <div class="text-gray-400 text-xs mb-1">Підписники</div>
+                        <div id="subscribersDisplay" class="text-2xl font-bold">0</div>
+                    </div>
+                    <div class="bg-ytbg/60 p-4 rounded-xl border border-ytborder/55">
+                        <div class="text-gray-400 text-xs mb-1">Таймер нарахування</div>
+                        <div id="timerDisplay" class="text-2xl font-bold text-yellow-400">1с</div>
+                    </div>
+                    <div class="bg-ytbg/60 p-4 rounded-xl border border-ytborder/55 col-span-2 sm:col-span-1">
+                        <div class="text-gray-400 text-xs mb-1">Бонус за випередження</div>
+                        <div id="advanceBonusDisplay" class="text-2xl font-bold text-youtube">+1</div>
+                    </div>
+                </div>
+
+                <!-- Progress bar to next subscriber -->
+                <div>
+                    <div class="flex justify-between text-xs text-gray-400 mb-1">
+                        <span>Наступний підписник через:</span>
+                        <span id="countdownDisplay">1с</span>
+                    </div>
+                    <div class="w-full bg-ytbg rounded-full h-2.5 overflow-hidden border border-ytborder">
+                        <div id="progressBar" class="bg-youtube h-2.5 rounded-full transition-all duration-1000 w-0"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- YouTube Play Buttons (Досягнення) Section -->
+            <div class="bg-ytcard border border-ytborder rounded-2xl p-6">
+                <h2 class="text-xl font-bold mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-amber-400"></i> Кнопки за досягнення (Нагороди YouTube)
+                </h2>
+                <p class="text-gray-400 text-xs mb-4">Отримуйте престижні кнопки каналу за досягнення певної кількості підписників!</p>
+                <div id="playButtonsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <!-- Заповнюється автоматично з script.js -->
+                </div>
+            </div>
+
+            <!-- Fortune Wheel Section -->
+            <div class="bg-ytcard border border-ytborder rounded-2xl p-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-dharmachakra text-yellow-500"></i> Колесо Фортуни
+                </h2>
+                <div class="flex flex-col sm:flex-row items-center gap-6 justify-between">
+                    <div class="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center">
+                        <div id="wheel" class="w-full h-full rounded-full border-4 border-ytborder relative overflow-hidden transition-transform duration-[3000ms] cubic-bezier(0.15, 0.9, 0.2, 1)">
+                        </div>
+                        <div class="absolute -top-3 w-4 h-6 bg-youtube clip-polygon z-10"></div>
+                    </div>
+                    <div class="flex-1 text-center sm:text-left space-y-4">
+                        <p class="text-gray-300 text-sm">Випробуй удачу! Отримуй додаткові Долари та Ютуберки щоразу, коли крутиш колесо фортуни.</p>
+                        <div id="wheelRewardText" class="text-lg font-bold text-emerald-400 h-8 flex items-center justify-center sm:justify-start"></div>
+                        <button id="spinWheelBtn" class="bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-black font-bold px-8 py-3 rounded-xl transition shadow-lg shadow-yellow-500/20 w-full sm:w-auto cursor-pointer">
+                            Крутити колесо!
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Shop (1 col) -->
+        <div class="bg-ytcard border border-ytborder rounded-2xl p-6 flex flex-col">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-store text-youtube"></i> Магазин Студії
+            </h2>
+
+            <!-- Main Shop Category Tabs -->
+            <div class="flex border-b border-ytborder mb-4">
+                <button onclick="switchCategory('youtuberts')" id="tabCatYoutuberts" class="flex-1 pb-2 font-bold text-sm border-b-2 border-youtube text-youtube transition cursor-pointer">Ютуберки</button>
+                <button onclick="switchCategory('dollars')" id="tabCatDollars" class="flex-1 pb-2 font-bold text-sm border-b-2 border-transparent text-gray-400 hover:text-white transition cursor-pointer">Долари</button>
+            </div>
+
+            <!-- Youtuberts Subtabs -->
+            <div id="youtubertsSubtabs" class="flex border-b border-ytborder/60 mb-3 pb-1">
+                <button onclick="switchYoutubertsTab('timer')" id="tabSubTimer" class="flex-1 text-xs font-semibold pb-1.5 border-b-2 border-youtube text-youtube transition cursor-pointer">Скорочення таймеру</button>
+                <button onclick="switchYoutubertsTab('subs')" id="tabSubSubs" class="flex-1 text-xs font-semibold pb-1.5 border-b-2 border-transparent text-gray-400 hover:text-white transition cursor-pointer">Кількість підписників</button>
+            </div>
+
+            <!-- Shop Items Containers -->
+            <div id="shopYoutubertsTimer" class="space-y-3 overflow-y-auto max-h-[500px] pr-1"></div>
+            <div id="shopYoutubertsSubs" class="space-y-3 overflow-y-auto max-h-[500px] pr-1 hidden"></div>
+            <div id="shopDollars" class="space-y-3 overflow-y-auto max-h-[500px] pr-1 hidden"></div>
+        </div>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
